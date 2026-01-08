@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="id">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Drawing Management</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8fafc;
+    }
+    html {
+      height: 100%;
+    }
+
+    .loading-spinner {
+      border: 3px solid #f3f4f6;
+      border-top: 3px solid #059669;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .card-hover {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(29, 84, 108, 0.15);
+    }
+    .stat-card-1 {
+      background: #1D546C;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .stat-card-2 {
+      background: #0f9d58;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .stat-card-3 {
+      background: #f59e0b;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .stat-card-4 {
+      background: #8b5cf6;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .glass-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .table-container {
+      overflow-x: auto;
+      border-radius: 12px;
+    }
+    .search-input:focus {
+      outline: none;
+      ring: 2px;
+      ring-color: #1D546C;
+    }
+
+    .elegant-title {
+      color: #1e293b;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .drawing-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .drawing-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(29, 84, 108, 0.15);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .badge-line {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .badge-mesin {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .badge-vendor {
+      background: #fef3c7;
+      color: #92400e;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="min-h-full p-6 relative z-10"><!-- Header -->
+   <div class="glass-card rounded-xl p-6 mb-6 text-center relative"><!-- Google Sheets Status -->
+    <div class="absolute top-4 right-4">
+     <div class="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200"><span id="connection-status" class="text-xs text-green-700 font-medium">● Live</span>
+     </div>
+    </div>
+    <h1 id="dashboard-title" class="text-3xl mb-2 elegant-title">Dashboard Drawing Management</h1>
+    <p class="text-sm text-gray-500 mb-3">Departemen Technical Support</p><!-- Real Time Clock -->
+    <div class="flex justify-center items-center gap-3 text-sm text-gray-600"><span id="current-time" class="font-medium">--:--:--</span> <span class="text-gray-400">•</span> <span id="current-date">-- --- ----</span>
+    </div>
+   </div><!-- Stats Cards -->
+   <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="stat-card-1 rounded-2xl p-6 text-white card-hover">
+     <div class="flex items-center justify-between mb-4">
+      <div class="text-sm opacity-90">
+       Total Drawing
+      </div>
+      <div class="text-2xl">
+       📊
+      </div>
+     </div>
+     <div id="total-drawings" class="text-4xl font-bold mb-2">
+      0
+     </div>
+     <div class="text-xs opacity-75">
+      Dokumen tersedia
+     </div>
+    </div>
+    <div class="stat-card-2 rounded-2xl p-6 text-white card-hover">
+     <div class="flex items-center justify-between mb-4">
+      <div class="text-sm opacity-90">
+       Total Line
+      </div>
+      <div class="text-2xl">
+       🏭
+      </div>
+     </div>
+     <div id="total-lines" class="text-4xl font-bold mb-2">
+      0
+     </div>
+     <div class="text-xs opacity-75">
+      Jalur produksi
+     </div>
+    </div>
+    <div class="stat-card-3 rounded-2xl p-6 text-white card-hover">
+     <div class="flex items-center justify-between mb-4">
+      <div class="text-sm opacity-90">
+       Total Mesin
+      </div>
+      <div class="text-2xl">
+       ⚙️
+      </div>
+     </div>
+     <div id="total-machines" class="text-4xl font-bold mb-2">
+      0
+     </div>
+     <div class="text-xs opacity-75">
+      Unit mesin
+     </div>
+    </div>
+    <div class="stat-card-4 rounded-2xl p-6 card-hover">
+     <div class="flex items-center justify-between mb-4">
+      <div class="text-sm opacity-90">
+       Total Vendor
+      </div>
+      <div class="text-2xl">
+       🤝
+      </div>
+     </div>
+     <div id="total-vendors" class="text-4xl font-bold mb-2">
+      0
+     </div>
+     <div class="text-xs opacity-75">
+      Mitra kerja
+     </div>
+    </div>
+   </div><!-- Controls -->
+   <div class="glass-card rounded-2xl p-6 mb-6"><!-- Filter Dropdowns with Checkboxes -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+     <div><label class="block text-sm font-medium text-gray-800 mb-2">🏭 Filter Line</label>
+      <div class="relative"><button id="line-dropdown-btn" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-600 transition-colors bg-white/50 backdrop-blur-sm text-gray-800 hover:scale-105 transform transition-transform duration-200 text-left flex items-center justify-between"> <span>Pilih Line</span>
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></button>
+       <div id="line-dropdown" class="hidden absolute z-10 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div class="p-2" id="line-checkbox-container"></div>
+       </div>
+      </div>
+      <div id="selected-lines" class="mt-2 flex flex-wrap gap-1"></div>
+     </div>
+     <div><label class="block text-sm font-medium text-gray-800 mb-2">⚙️ Filter Mesin</label>
+      <div class="relative"><button id="mesin-dropdown-btn" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-600 transition-colors bg-white/50 backdrop-blur-sm text-gray-800 hover:scale-105 transform transition-transform duration-200 text-left flex items-center justify-between"> <span>Pilih Mesin</span>
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></button>
+       <div id="mesin-dropdown" class="hidden absolute z-10 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div class="p-2" id="mesin-checkbox-container"></div>
+       </div>
+      </div>
+      <div id="selected-mesins" class="mt-2 flex flex-wrap gap-1"></div>
+     </div>
+     <div><label class="block text-sm font-medium text-gray-800 mb-2">🤝 Filter Vendor</label>
+      <div class="relative"><button id="vendor-dropdown-btn" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-600 transition-colors bg-white/50 backdrop-blur-sm text-gray-800 hover:scale-105 transform transition-transform duration-200 text-left flex items-center justify-between"> <span>Pilih Vendor</span>
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg></button>
+       <div id="vendor-dropdown" class="hidden absolute z-10 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div class="p-2" id="vendor-checkbox-container"></div>
+       </div>
+      </div>
+      <div id="selected-vendors" class="mt-2 flex flex-wrap gap-1"></div>
+     </div>
+    </div><!-- Search, View Toggle and Refresh -->
+    <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+     <div class="flex-1 w-full md:w-auto"><input type="text" id="search-input" placeholder="🔍 Cari berdasarkan Produk, Part, atau Vendor..." class="search-input w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-teal-600 transition-all duration-200 bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-500 hover:scale-105 transform">
+     </div>
+     <div class="flex gap-2"><!-- View Mode Toggle -->
+      <div class="bg-white/50 rounded-lg p-1 flex gap-1 border-2 border-gray-300"><button id="table-view-btn" class="px-4 py-2 rounded-md transition-all duration-200 bg-teal-600 text-white shadow-sm" title="Table View">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg></button> <button id="card-view-btn" class="px-4 py-2 rounded-md transition-all duration-200 text-gray-600 hover:bg-white/70" title="Card View">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        </svg></button>
+      </div><button id="refresh-btn" class="px-6 py-3 bg-gradient-to-r from-teal-700 to-teal-600 text-white rounded-lg hover:from-teal-800 hover:to-teal-700 transition-all duration-300 font-medium whitespace-nowrap shadow-lg hover:shadow-xl transform hover:scale-105"> 🔄 <span id="refresh-text">Refresh Data</span> </button>
+     </div>
+    </div>
+   </div><!-- Loading State -->
+   <div id="loading-state" class="flex flex-col items-center justify-center py-16">
+    <div class="loading-spinner mb-4"></div>
+    <p class="text-gray-600">Memuat data dari spreadsheet...</p>
+   </div><!-- Error State -->
+   <div id="error-state" class="hidden bg-red-50 border-2 border-red-200 rounded-xl p-6 mb-6">
+    <div class="flex items-start gap-3"><span class="text-2xl">⚠️</span>
+     <div>
+      <h3 class="font-bold text-red-800 mb-1">Gagal Memuat Data</h3>
+      <p id="error-message" class="text-red-600"></p>
+     </div>
+    </div>
+   </div><!-- Data Container -->
+   <div id="data-container" class="hidden"><!-- Table View -->
+    <div id="table-view" class="glass-card rounded-2xl overflow-hidden">
+     <div class="table-container">
+      <table class="w-full">
+       <thead class="bg-teal-100/50 backdrop-blur-sm border-b-2 border-teal-200">
+        <tr>
+         <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Line</th>
+         <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Mesin</th>
+         <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Produk</th>
+         <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Nama Part</th>
+         <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Vendor</th>
+         <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Drawing</th>
+         <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Foto</th>
+         <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">Tgl Approval</th>
+         <th class="px-6 py-4 text-left text-sm font-semibold text-gray-800">No. Drawing</th>
+        </tr>
+       </thead>
+       <tbody id="table-body" class="divide-y divide-gray-200">
+       </tbody>
+      </table>
+     </div>
+    </div><!-- Card View -->
+    <div id="card-view" class="hidden">
+     <div id="card-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+     </div>
+    </div><!-- No Results -->
+    <div id="no-results" class="hidden text-center py-12"><span class="text-6xl mb-4 block">🔍</span>
+     <p class="text-gray-800 text-lg">Tidak ada data yang sesuai dengan pencarian</p>
+    </div><!-- Pagination -->
+    <div id="pagination-container" class="glass-card rounded-xl p-4 mt-6 flex items-center justify-between">
+     <div class="text-sm text-gray-600">
+      Menampilkan <span id="showing-start">1</span> - <span id="showing-end">25</span> dari <span id="total-records">0</span> data
+     </div>
+     <div class="flex items-center gap-2"><button id="prev-btn" class="px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled> ← Previous </button> <span id="page-info" class="px-4 py-2 text-sm text-gray-700"> Halaman <span id="current-page">1</span> dari <span id="total-pages">1</span> </span> <button id="next-btn" class="px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"> Next → </button>
+     </div>
+    </div>
+   </div><!-- Footer -->
+   <footer class="mt-12 text-center">
+    <div class="glass-card rounded-2xl p-6">
+     <div class="flex items-center justify-center gap-2 mb-2">
+      <svg width="20" height="20" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5z" fill="#1D546C" /> <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#1D546C" stroke-width="2" fill="none" />
+      </svg><span class="text-lg font-bold text-gray-800">Management Drawing</span>
+     </div>
+     <div class="flex items-center justify-center gap-1 mb-2"><span class="text-sm text-gray-600">Dikembangkan with</span>
+      <svg width="16" height="16" viewbox="0 0 24 24" fill="#e74c3c" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+      </svg><span class="text-sm text-gray-600">oleh <span class="font-semibold text-gray-800">supermin - super admin</span></span>
+     </div>
+     <p class="text-sm text-gray-600 mb-1">Departemen Technical Support</p>
+     <p class="text-sm font-semibold text-gray-700 mb-2">PT Dankos Farma</p>
+     <p class="text-xs text-gray-500">© 2025 version 1.2 - Management Drawing</p>
+    </div>
+   </footer>
+  </div>
+  <script>
+    const SHEET_ID = '1ZiiAf1dRDVGiEysCCQyVl99-B797Gt8h5i2y-Uqy_Lo';
+    const GID = '1756764043';
+    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
+
+    let allData = [];
+    let filteredData = [];
+    let currentLineFilter = [];
+    let currentMesinFilter = [];
+    let currentVendorFilter = [];
+    let currentSearchTerm = '';
+    let currentPage = 1;
+    const itemsPerPage = 25;
+    let lastDataCount = 0;
+    let isFirstLoad = true;
+    let currentView = 'table'; // 'table' or 'card'
+
+    const defaultConfig = {
+      dashboard_title: 'Dashboard Drawing Management',
+      refresh_text: 'Refresh Data',
+      primary_color: '#059669',
+      surface_color: '#ffffff',
+      text_color: '#1f2937',
+      button_color: '#7c3aed',
+      accent_color: '#f59e0b',
+      font_family: 'Inter',
+      font_size: 16
+    };
+
+    async function onConfigChange(config) {
+      const title = config.dashboard_title || defaultConfig.dashboard_title;
+      const refreshText = config.refresh_text || defaultConfig.refresh_text;
+
+      document.getElementById('dashboard-title').textContent = title;
+      document.getElementById('refresh-text').textContent = refreshText;
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ['dashboard_title', config.dashboard_title || defaultConfig.dashboard_title],
+        ['refresh_text', config.refresh_text || defaultConfig.refresh_text]
+      ]);
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+
+    async function fetchSheetData() {
+      try {
+        document.getElementById('connection-status').innerHTML = '● Syncing...';
+        document.getElementById('connection-status').className = 'text-xs text-yellow-700 font-medium';
+        
+        showLoading();
+        hideError();
+
+        const response = await fetch(SHEET_URL);
+        const text = await response.text();
+        const json = JSON.parse(text.substring(47).slice(0, -2));
+
+        const rows = json.table.rows;
+        allData = rows.slice(1).map(row => {
+          let tanggalApproval = row.c[8]?.v || '';
+          
+          if (tanggalApproval) {
+            try {
+              let date;
+              
+              if (typeof tanggalApproval === 'string' && tanggalApproval.startsWith('Date(')) {
+                const matches = tanggalApproval.match(/Date\((\d+),(\d+),(\d+)\)/);
+                if (matches) {
+                  const year = parseInt(matches[1]);
+                  const month = parseInt(matches[2]);
+                  const day = parseInt(matches[3]);
+                  date = new Date(year, month, day);
+                }
+              } else {
+                date = new Date(tanggalApproval);
+              }
+              
+              if (date && !isNaN(date.getTime())) {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const day = date.getDate();
+                const month = months[date.getMonth()];
+                const year = date.getFullYear();
+                tanggalApproval = `${day} ${month} ${year}`;
+              }
+            } catch (e) {
+              // Keep original format if parsing fails
+            }
+          }
+          
+          return {
+            line: row.c[1]?.v || '',
+            mesin: row.c[2]?.v || '',
+            produk: row.c[3]?.v || '',
+            namaPart: row.c[4]?.v || '',
+            vendor: row.c[5]?.v || '',
+            drawing: row.c[6]?.v || '',
+            foto: row.c[7]?.v || '',
+            tanggalApproval: tanggalApproval,
+            nomorDrawing: row.c[9]?.v || ''
+          };
+        });
+
+        if (!isFirstLoad && allData.length > lastDataCount) {
+          const newDataCount = allData.length - lastDataCount;
+          showNewDataNotification(newDataCount);
+        }
+        
+        lastDataCount = allData.length;
+        isFirstLoad = false;
+        
+        filteredData = [...allData];
+        updateStats();
+        populateFilterDropdowns();
+        applyFilters();
+        hideLoading();
+        showDataContainer();
+        
+        document.getElementById('connection-status').innerHTML = '● Live';
+        document.getElementById('connection-status').className = 'text-xs text-green-700 font-medium';
+        
+      } catch (error) {
+        hideLoading();
+        showError('Tidak dapat mengambil data dari spreadsheet. Pastikan link spreadsheet dapat diakses publik.');
+        
+        document.getElementById('connection-status').innerHTML = '● Error';
+        document.getElementById('connection-status').className = 'text-xs text-red-700 font-medium';
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('total-drawings').textContent = allData.length;
+      
+      const uniqueLines = new Set(allData.map(d => d.line).filter(Boolean).map(line => line.toLowerCase()));
+      document.getElementById('total-lines').textContent = uniqueLines.size;
+      
+      const uniqueMachines = new Set(allData.map(d => d.mesin).filter(Boolean).map(mesin => mesin.toLowerCase()));
+      document.getElementById('total-machines').textContent = uniqueMachines.size;
+      
+      const uniqueVendors = new Set(allData.map(d => d.vendor).filter(Boolean).map(vendor => vendor.toLowerCase()));
+      document.getElementById('total-vendors').textContent = uniqueVendors.size;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+      
+      if (filteredData.length === 0) {
+        return;
+      }
+      
+      const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, filteredData.length);
+      const pageData = filteredData.slice(startIndex, endIndex);
+      
+      pageData.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        tr.className = index % 2 === 0 ? 'bg-white/30 hover:bg-teal-50/50 backdrop-blur-sm' : 'bg-white/50 hover:bg-teal-100/50 backdrop-blur-sm';
+        tr.innerHTML = `
+          <td class="px-6 py-4 text-sm text-gray-800">${row.line}</td>
+          <td class="px-6 py-4 text-sm text-gray-800">${row.mesin}</td>
+          <td class="px-6 py-4 text-sm text-gray-800">${row.produk}</td>
+          <td class="px-6 py-4 text-sm text-gray-800">${row.namaPart}</td>
+          <td class="px-6 py-4 text-sm text-gray-800">${row.vendor}</td>
+          <td class="px-6 py-4 text-sm">
+            ${row.drawing ? `<a href="${row.drawing}" target="_blank" rel="noopener noreferrer" class="text-teal-600 hover:text-teal-800 underline">Link</a>` : '<span class="text-gray-400">-</span>'}
+          </td>
+          <td class="px-6 py-4 text-sm">
+            ${row.foto ? `<a href="${row.foto}" target="_blank" rel="noopener noreferrer" class="text-teal-600 hover:text-teal-800 underline">Lihat</a>` : '<span class="text-gray-400">-</span>'}
+          </td>
+          <td class="px-6 py-4 text-sm text-gray-800">${row.tanggalApproval}</td>
+          <td class="px-6 py-4 text-sm font-medium text-gray-800">
+            <div class="flex items-center gap-2">
+              <span>${row.nomorDrawing}</span>
+              ${row.nomorDrawing ? `<button onclick="copyToClipboard('${row.nomorDrawing}')" class="text-gray-500 hover:text-teal-600 transition-colors" title="Salin nomor drawing">📋</button>` : ''}
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderCards() {
+      const cardGrid = document.getElementById('card-grid');
+      cardGrid.innerHTML = '';
+      
+      if (filteredData.length === 0) {
+        return;
+      }
+      
+      const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, filteredData.length);
+      const pageData = filteredData.slice(startIndex, endIndex);
+      
+      pageData.forEach((row) => {
+        const card = document.createElement('div');
+        card.className = 'drawing-card';
+        card.innerHTML = `
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex flex-wrap gap-2">
+              <span class="badge badge-line">${row.line}</span>
+              <span class="badge badge-mesin">${row.mesin}</span>
+            </div>
+            <div class="text-xs text-gray-500">${row.tanggalApproval}</div>
+          </div>
+          
+          <h3 class="text-lg font-bold text-gray-800 mb-2">${row.produk}</h3>
+          <p class="text-sm text-gray-600 mb-3">${row.namaPart}</p>
+          
+          <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
+            <span class="badge badge-vendor">${row.vendor}</span>
+            ${row.nomorDrawing ? `
+              <button onclick="copyToClipboard('${row.nomorDrawing}')" class="text-xs text-gray-500 hover:text-teal-600 transition-colors flex items-center gap-1" title="Salin nomor drawing">
+                <span class="font-mono">${row.nomorDrawing}</span>
+                <span>📋</span>
+              </button>
+            ` : ''}
+          </div>
+          
+          <div class="flex gap-2">
+            ${row.drawing ? `<a href="${row.drawing}" target="_blank" rel="noopener noreferrer" class="flex-1 px-4 py-2 bg-teal-600 text-white text-center rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium">📄 Drawing</a>` : '<div class="flex-1 px-4 py-2 bg-gray-200 text-gray-400 text-center rounded-lg text-sm font-medium">📄 No Drawing</div>'}
+            ${row.foto ? `<a href="${row.foto}" target="_blank" rel="noopener noreferrer" class="flex-1 px-4 py-2 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">📸 Foto</a>` : '<div class="flex-1 px-4 py-2 bg-gray-200 text-gray-400 text-center rounded-lg text-sm font-medium">📸 No Foto</div>'}
+          </div>
+        `;
+        cardGrid.appendChild(card);
+      });
+    }
+
+    function renderView() {
+      const noResults = document.getElementById('no-results');
+      const paginationContainer = document.getElementById('pagination-container');
+      
+      if (filteredData.length === 0) {
+        noResults.classList.remove('hidden');
+        paginationContainer.classList.add('hidden');
+        document.getElementById('table-view').classList.add('hidden');
+        document.getElementById('card-view').classList.add('hidden');
+        return;
+      }
+      
+      noResults.classList.add('hidden');
+      paginationContainer.classList.remove('hidden');
+      
+      // Update pagination info
+      const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, filteredData.length);
+      
+      document.getElementById('showing-start').textContent = startIndex + 1;
+      document.getElementById('showing-end').textContent = endIndex;
+      document.getElementById('total-records').textContent = filteredData.length;
+      document.getElementById('current-page').textContent = currentPage;
+      document.getElementById('total-pages').textContent = totalPages;
+      
+      document.getElementById('prev-btn').disabled = currentPage === 1;
+      document.getElementById('next-btn').disabled = currentPage === totalPages;
+      
+      if (currentView === 'table') {
+        document.getElementById('table-view').classList.remove('hidden');
+        document.getElementById('card-view').classList.add('hidden');
+        renderTable();
+      } else {
+        document.getElementById('table-view').classList.add('hidden');
+        document.getElementById('card-view').classList.remove('hidden');
+        renderCards();
+      }
+    }
+
+    function switchView(view) {
+      currentView = view;
+      
+      const tableBtn = document.getElementById('table-view-btn');
+      const cardBtn = document.getElementById('card-view-btn');
+      
+      if (view === 'table') {
+        tableBtn.className = 'px-4 py-2 rounded-md transition-all duration-200 bg-teal-600 text-white shadow-sm';
+        cardBtn.className = 'px-4 py-2 rounded-md transition-all duration-200 text-gray-600 hover:bg-white/70';
+      } else {
+        tableBtn.className = 'px-4 py-2 rounded-md transition-all duration-200 text-gray-600 hover:bg-white/70';
+        cardBtn.className = 'px-4 py-2 rounded-md transition-all duration-200 bg-teal-600 text-white shadow-sm';
+      }
+      
+      renderView();
+    }
+
+    function populateFilterDropdowns() {
+      const lineContainer = document.getElementById('line-checkbox-container');
+      const mesinContainer = document.getElementById('mesin-checkbox-container');
+      const vendorContainer = document.getElementById('vendor-checkbox-container');
+      
+      lineContainer.innerHTML = '';
+      mesinContainer.innerHTML = '';
+      vendorContainer.innerHTML = '';
+      
+      const uniqueLines = [...new Set(allData.map(d => d.line).filter(Boolean))].sort();
+      const uniqueMachines = [...new Set(allData.map(d => d.mesin).filter(Boolean))].sort();
+      const uniqueVendors = [...new Set(allData.map(d => d.vendor).filter(Boolean))].sort();
+      
+      uniqueLines.forEach(line => {
+        const label = document.createElement('label');
+        label.className = 'flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded cursor-pointer';
+        label.innerHTML = `
+          <input type="checkbox" value="${line}" class="line-checkbox w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+          <span class="text-sm text-gray-800">${line}</span>
+        `;
+        lineContainer.appendChild(label);
+      });
+      
+      uniqueMachines.forEach(mesin => {
+        const label = document.createElement('label');
+        label.className = 'flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded cursor-pointer';
+        label.innerHTML = `
+          <input type="checkbox" value="${mesin}" class="mesin-checkbox w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+          <span class="text-sm text-gray-800">${mesin}</span>
+        `;
+        mesinContainer.appendChild(label);
+      });
+      
+      uniqueVendors.forEach(vendor => {
+        const label = document.createElement('label');
+        label.className = 'flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded cursor-pointer';
+        label.innerHTML = `
+          <input type="checkbox" value="${vendor}" class="vendor-checkbox w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+          <span class="text-sm text-gray-800">${vendor}</span>
+        `;
+        vendorContainer.appendChild(label);
+      });
+      
+      document.querySelectorAll('.line-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            if (!currentLineFilter.includes(e.target.value)) {
+              currentLineFilter.push(e.target.value);
+            }
+          } else {
+            currentLineFilter = currentLineFilter.filter(f => f !== e.target.value);
+          }
+          updateFilterTags();
+          applyFilters();
+        });
+      });
+      
+      document.querySelectorAll('.mesin-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            if (!currentMesinFilter.includes(e.target.value)) {
+              currentMesinFilter.push(e.target.value);
+            }
+          } else {
+            currentMesinFilter = currentMesinFilter.filter(f => f !== e.target.value);
+          }
+          updateFilterTags();
+          applyFilters();
+        });
+      });
+      
+      document.querySelectorAll('.vendor-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            if (!currentVendorFilter.includes(e.target.value)) {
+              currentVendorFilter.push(e.target.value);
+            }
+          } else {
+            currentVendorFilter = currentVendorFilter.filter(f => f !== e.target.value);
+          }
+          updateFilterTags();
+          applyFilters();
+        });
+      });
+    }
+
+    function applyFilters() {
+      filteredData = allData.filter(row => {
+        if (currentLineFilter.length > 0 && !currentLineFilter.includes('') && !currentLineFilter.includes(row.line)) {
+          return false;
+        }
+        
+        if (currentMesinFilter.length > 0 && !currentMesinFilter.includes('') && !currentMesinFilter.includes(row.mesin)) {
+          return false;
+        }
+        
+        if (currentVendorFilter.length > 0 && !currentVendorFilter.includes('') && !currentVendorFilter.includes(row.vendor)) {
+          return false;
+        }
+        
+        if (currentSearchTerm) {
+          const term = currentSearchTerm.toLowerCase();
+          return row.produk.toLowerCase().includes(term) ||
+                 row.namaPart.toLowerCase().includes(term) ||
+                 row.vendor.toLowerCase().includes(term);
+        }
+        
+        return true;
+      });
+      
+      currentPage = 1;
+      renderView();
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = '✅';
+        button.style.color = '#10b981';
+        
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.color = '';
+        }, 1500);
+      }).catch(() => {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = '✅';
+        button.style.color = '#10b981';
+        
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.color = '';
+        }, 1500);
+      });
+    }
+
+    function showLoading() {
+      document.getElementById('loading-state').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      document.getElementById('loading-state').classList.add('hidden');
+    }
+
+    function showError(message) {
+      document.getElementById('error-message').textContent = message;
+      document.getElementById('error-state').classList.remove('hidden');
+    }
+
+    function hideError() {
+      document.getElementById('error-state').classList.add('hidden');
+    }
+
+    function showDataContainer() {
+      document.getElementById('data-container').classList.remove('hidden');
+    }
+
+    function showNewDataNotification(count) {
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+      notification.innerHTML = `
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          <span class="font-medium">${count} data baru ditambahkan!</span>
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+      }, 100);
+      
+      setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }, 4000);
+    }
+
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      currentSearchTerm = e.target.value;
+      applyFilters();
+    });
+
+    function createFilterTag(text, type, value) {
+      const tag = document.createElement('span');
+      tag.className = 'inline-flex items-center gap-1 px-2 py-1 bg-teal-100 text-teal-800 text-xs rounded-full';
+      tag.innerHTML = `
+        ${text}
+        <button onclick="removeFilter('${type}', '${value}')" class="hover:bg-teal-200 rounded-full p-0.5">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      `;
+      return tag;
+    }
+
+    function updateFilterTags() {
+      const lineContainer = document.getElementById('selected-lines');
+      lineContainer.innerHTML = '';
+      currentLineFilter.filter(f => f !== '').forEach(line => {
+        lineContainer.appendChild(createFilterTag(line, 'line', line));
+      });
+
+      const mesinContainer = document.getElementById('selected-mesins');
+      mesinContainer.innerHTML = '';
+      currentMesinFilter.filter(f => f !== '').forEach(mesin => {
+        mesinContainer.appendChild(createFilterTag(mesin, 'mesin', mesin));
+      });
+
+      const vendorContainer = document.getElementById('selected-vendors');
+      vendorContainer.innerHTML = '';
+      currentVendorFilter.filter(f => f !== '').forEach(vendor => {
+        vendorContainer.appendChild(createFilterTag(vendor, 'vendor', vendor));
+      });
+    }
+
+    function removeFilter(type, value) {
+      if (type === 'line') {
+        currentLineFilter = currentLineFilter.filter(f => f !== value);
+      } else if (type === 'mesin') {
+        currentMesinFilter = currentMesinFilter.filter(f => f !== value);
+      } else if (type === 'vendor') {
+        currentVendorFilter = currentVendorFilter.filter(f => f !== value);
+      }
+      updateFilterTags();
+      applyFilters();
+    }
+
+    document.getElementById('line-dropdown-btn').addEventListener('click', () => {
+      const dropdown = document.getElementById('line-dropdown');
+      dropdown.classList.toggle('hidden');
+      document.getElementById('mesin-dropdown').classList.add('hidden');
+      document.getElementById('vendor-dropdown').classList.add('hidden');
+    });
+
+    document.getElementById('mesin-dropdown-btn').addEventListener('click', () => {
+      const dropdown = document.getElementById('mesin-dropdown');
+      dropdown.classList.toggle('hidden');
+      document.getElementById('line-dropdown').classList.add('hidden');
+      document.getElementById('vendor-dropdown').classList.add('hidden');
+    });
+
+    document.getElementById('vendor-dropdown-btn').addEventListener('click', () => {
+      const dropdown = document.getElementById('vendor-dropdown');
+      dropdown.classList.toggle('hidden');
+      document.getElementById('line-dropdown').classList.add('hidden');
+      document.getElementById('mesin-dropdown').classList.add('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#line-dropdown-btn') && !e.target.closest('#line-dropdown')) {
+        document.getElementById('line-dropdown').classList.add('hidden');
+      }
+      if (!e.target.closest('#mesin-dropdown-btn') && !e.target.closest('#mesin-dropdown')) {
+        document.getElementById('mesin-dropdown').classList.add('hidden');
+      }
+      if (!e.target.closest('#vendor-dropdown-btn') && !e.target.closest('#vendor-dropdown')) {
+        document.getElementById('vendor-dropdown').classList.add('hidden');
+      }
+    });
+
+    document.getElementById('table-view-btn').addEventListener('click', () => {
+      switchView('table');
+    });
+
+    document.getElementById('card-view-btn').addEventListener('click', () => {
+      switchView('card');
+    });
+
+    document.getElementById('refresh-btn').addEventListener('click', () => {
+      fetchSheetData();
+    });
+
+    document.getElementById('prev-btn').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderView();
+      }
+    });
+
+    document.getElementById('next-btn').addEventListener('click', () => {
+      const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderView();
+      }
+    });
+
+    function updateClock() {
+      const now = new Date();
+      
+      const timeOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      };
+      const timeString = now.toLocaleTimeString('id-ID', timeOptions);
+      
+      const dateOptions = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      };
+      const dateString = now.toLocaleDateString('id-ID', dateOptions);
+      
+      document.getElementById('current-time').textContent = timeString;
+      document.getElementById('current-date').textContent = dateString;
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    fetchSheetData();
+    setInterval(fetchSheetData, 10000);
+    
+    window.addEventListener('focus', () => {
+      fetchSheetData();
+    });
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ba7f00ad423ce23',t:'MTc2NzgzNTkxMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
